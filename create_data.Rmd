@@ -1,0 +1,97 @@
+---
+title: "Prepare Common Crawl Host Ranks Data for taking a sample"
+---
+
+The data has been transformed on a local Spark cluster on a MBP with 64GB RAM as the host rank files are pretty large.
+
+```{r Libraries, message=FALSE, echo=FALSE, error=FALSE, warning=FALSE}
+library(tidyverse)
+library(sparklyr)
+```
+
+```{r StartSpark}
+conf <- spark_config()
+conf$`sparklyr.shell.driver-memory` <- "32G"
+conf$spark.driver.maxResultsSize <- "32G"
+sc <- spark_connect(master = "local", 
+                    version = "3.1",
+                    config = conf)
+
+```
+
+Adjust the path to your file:
+
+```{r "Load Common Crawl Host Web Graph data"}
+hosts_ranks <- spark_read_csv(sc, "hosts_ranks", "/Users/tom/Documents/10_Data/DissData/cc-host-ranks-jan-2022.csv", delimiter = " ")
+```
+
+Transform from reverse domain notation to normal notation:
+
+```{r}
+hosts_ranks <- hosts_ranks %>%
+  mutate(host = split(host_rev, "\\\\.")) %>%
+  sdf_separate_column("host", paste0("x", 0:5)) %>%
+  mutate(host = paste(x5,x4,x3,x2,x1,x0, sep=".")) %>%
+  select(-x0,-x1,-x2, -x3, -x4, -x5)
+```
+
+Load Language file; this is produced using AWS Athena with the following SQL query:
+
+WITH tmp AS (
+SELECT COUNT(*) AS num_pages,
+url_host_name,
+SUM(COUNT(*)) OVER(PARTITION BY url_host_name) as total_pages_host,
+regexp_extract(content_languages, '^([a-z]{3})') as
+primary_content_language
+FROM ccindex.ccindex
+GROUP BY regexp_extract(content_languages, '^([a-z]{3})'),
+url_host_name)
+SELECT num_pages,
+url_host_name,
+total_pages_host,
+(100.0*num_pages/total_pages_host) AS perc_of_host
+FROM tmp
+WHERE primary_content_language = 'deu'
+AND num_pages >= 10
+ORDER BY num_pages DESC;
+
+```{r}
+cc_german_hosts <- spark_read_csv(sc, "cc_german_hosts", "~/Documents/10_Data/DissData/german_hosts_with_probs.csv")
+```
+
+Remove www:
+
+```{r}
+cc_german_hosts <- cc_german_hosts %>%
+  mutate(url_host_name = regexp_replace(url_host_name,"^www\\\\.", ""))
+cc_german_hosts <- cc_german_hosts %>%
+  mutate(german = 1)
+```
+
+Join the data sets and mark some technical hosts
+
+```{r}
+data <- hosts_ranks %>%
+  left_join(cc_german_hosts, by=c("host" = "url_host_name")) %>%
+  mutate(technical = if_else(rlike(host, "akamaized|fls\\\\.doubleclick"), 1, 0)) %>%
+  distinct() %>%
+  select(-num_pages,-total_pages_host)
+```
+
+Limit the data to the top 50 million:
+
+```{r}
+data <- data %>%
+  filter(harmonicc_pos < 10000001) %>%
+  select(-host_rev) %>%
+  arrange(harmonicc_pos)
+```
+
+Make sure Spark writes only one file:
+
+```{r}
+data1 <- sdf_coalesce(data, 1)
+spark_write_csv(data1, "50million_file.csv", mode = "overwrite")
+```
+
+You will still need to rename the file as Sparkly may have created a folder with that name.
