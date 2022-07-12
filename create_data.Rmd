@@ -22,7 +22,7 @@ sc <- spark_connect(master = "local",
 Adjust the path to your file:
 
 ```{r "Load Common Crawl Host Web Graph data"}
-hosts_ranks <- spark_read_csv(sc, "hosts_ranks", "/Users/tom/Documents/10_Data/DissData/cc-host-ranks-jan-2022.csv", delimiter = " ")
+hosts_ranks <- spark_read_csv(sc, "hosts_ranks", "/Users/tom/Documents/10_Data/DissData/1/cc-host-ranks-jan-2022.csv", delimiter = " ")
 ```
 
 Transform from reverse domain notation to normal notation:
@@ -56,16 +56,27 @@ AND num_pages >= 10
 ORDER BY num_pages DESC;
 
 ```{r}
-cc_german_hosts <- spark_read_csv(sc, "cc_german_hosts", "~/Documents/10_Data/DissData/german_hosts_with_probs.csv")
-```
-
-Remove www:
-
-```{r}
+cc_german_hosts <- spark_read_csv(sc, "cc_german_hosts", "~/Documents/10_Data/DissData/1/german_hosts_with_probs.csv")
 cc_german_hosts <- cc_german_hosts %>%
   mutate(url_host_name = regexp_replace(url_host_name,"^www\\\\.", ""))
 cc_german_hosts <- cc_german_hosts %>%
-  mutate(german = 1)
+  rename(de = perc_of_host)
+```
+
+```{r}
+cc_italian_hosts <- spark_read_csv(sc, "cc_italian_hosts", "~/Documents/10_Data/DissData/1/cc_italian_hosts.csv")
+cc_italian_hosts <- cc_italian_hosts %>%
+  mutate(url_host_name = regexp_replace(url_host_name,"^www\\\\.", ""))
+cc_italian_hosts <- cc_italian_hosts %>%
+  rename(it = perc_of_host)
+```
+
+```{r}
+cc_french_hosts <- spark_read_csv(sc, "cc_french_hosts", "~/Documents/10_Data/DissData/1/cc_french_hosts.csv")
+cc_french_hosts <- cc_french_hosts %>%
+  mutate(url_host_name = regexp_replace(url_host_name,"^www\\\\.", ""))
+cc_french_hosts <- cc_french_hosts %>%
+  rename(fr = perc_of_host)
 ```
 
 Join the data sets and mark some technical hosts
@@ -73,6 +84,8 @@ Join the data sets and mark some technical hosts
 ```{r}
 data <- hosts_ranks %>%
   left_join(cc_german_hosts, by=c("host" = "url_host_name")) %>%
+  left_join(cc_italian_hosts, by=c("host" = "url_host_name")) %>%
+  left_join(cc_french_hosts, by=c("host" = "url_host_name")) %>%
   mutate(technical = if_else(rlike(host, "akamaized|fls\\\\.doubleclick"), 1, 0)) %>%
   distinct() %>%
   select(-num_pages,-total_pages_host)
@@ -82,7 +95,7 @@ Limit the data to the top 50 million:
 
 ```{r}
 data <- data %>%
-  filter(harmonicc_pos < 10000001) %>%
+  filter(harmonicc_pos < 50000001) %>%
   select(-host_rev) %>%
   arrange(harmonicc_pos)
 ```
@@ -94,4 +107,4 @@ data1 <- sdf_coalesce(data, 1)
 spark_write_csv(data1, "50million_file.csv", mode = "overwrite")
 ```
 
-You will still need to rename the file as Sparkly may have created a folder with that name.
+You will still need to rename the file as Sparkly may have created a folder with that name but the file itself has a different name!

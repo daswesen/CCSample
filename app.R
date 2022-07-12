@@ -2,7 +2,7 @@ library(vroom)
 library(shiny)
 library(tidyverse)
 
-data <- vroom("50million_file.csv")
+data <- vroom("10000000.csv")
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
@@ -30,7 +30,7 @@ ui <- fluidPage(
             selectInput(
               "language",
               "Language",
-              c("All", "German"),
+              c("All", "French", "German", "Italian"),
               selected = NULL
             ),
             
@@ -85,9 +85,20 @@ server <- function(input, output, session) {
   }
   
   if(language == "German") {
+    print("bin in German")
     data <- data %>%
-      filter(german == 1) %>%
-      filter(perc_of_host >= perc_hosts)
+      filter(de > 0) %>%
+      filter(de >= perc_hosts)
+  }
+  else if(language == "French") {
+    data <- data %>%
+    filter(fr > 0) %>%
+      filter(fr >= perc_hosts)
+  }
+  else if(language == "Italian") {
+    data <- data %>%
+      filter(it > 0) %>%
+      filter(it >= perc_hosts)
   }
   
   if(nrow(data) <= sampleSize) {
@@ -97,7 +108,7 @@ server <- function(input, output, session) {
   my_sample <- sample_n(data, sampleSize)
   
   my_sample <- my_sample %>%
-    select(-german, -technical, -perc_of_host)
+    select(-technical)
 
     output$sample <- renderTable({
       head(my_sample, 10) 
