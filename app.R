@@ -56,7 +56,7 @@ ui <- fluidPage(
           p("This app allows you take a random sample from the first 10 million hosts from the Common Crawl Host Web Graph. Hosts have been transformed from reverse domain notation. The latest data is from the November/December 2021 and January 2022 crawl. You will find the source code of this app as well as data preparation scripts and documentation on GitHub:"),
           tags$a(href="https://github.com/daswesen/CCSample", "Go to the GitHub Repository"),
           p(),
-          p("Please note that the language feature is still experimental. Technical hosts exclusion is based on a blacklist."),
+          p("Please note that the language feature is still experimental. Technical hosts exclusion is based on a blacklist. Feel free to contact me for additions."),
           p("If your configuration results in a smaller dataset than the request sample size, than the sample will be reduced to the dataset size."),
           strong("After having clicked the 'Create Sample' button, it will take some time until the sample is taken. When ready, you will see a few lines of your sample as soon as the data has been processed."),
           p("Feel free to contact me at albythom@hu-berlin.de!"),

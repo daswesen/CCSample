@@ -35,7 +35,7 @@ hosts_ranks <- hosts_ranks %>%
   select(-x0,-x1,-x2, -x3, -x4, -x5)
 ```
 
-Load Language file; this is produced using AWS Athena with the following SQL query:
+Load Language file; this is produced using AWS Athena with the following SQL query (thanks to Sebastian Nagel from Common Crawl for the support here):
 
 WITH tmp AS (
 SELECT COUNT(*) AS num_pages,
