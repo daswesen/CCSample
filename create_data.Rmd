@@ -22,7 +22,7 @@ sc <- spark_connect(master = "local",
 Adjust the path to your file:
 
 ```{r "Load Common Crawl Host Web Graph data"}
-hosts_ranks <- spark_read_csv(sc, "hosts_ranks", "/Users/tom/Documents/10_Data/DissData/1/cc-host-ranks-jan-2022.csv", delimiter = " ")
+hosts_ranks <- spark_read_csv(sc, "hosts_ranks", "/Users/tom/Documents/10_Data/DissData/1/cc-main-2022-may-jun-aug-host-ranks.txt", delimiter = "\t")
 ```
 
 Transform from reverse domain notation to normal notation:
@@ -95,7 +95,7 @@ Limit the data to the top 50 million:
 
 ```{r}
 data <- data %>%
-  filter(harmonicc_pos < 50000001) %>%
+  filter(harmonicc_pos < 10000001) %>%
   select(-host_rev) %>%
   arrange(harmonicc_pos)
 ```

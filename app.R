@@ -35,7 +35,7 @@ ui <- fluidPage(
             ),
             
             sliderInput("perc_hosts",
-                        "Minimum percentage of pages on a host that needs to be in German to include the host:",
+                        "Minimum percentage of pages on a host that needs to be in the selected language to include the host:",
                         min = 0,
                         max = 20,
                         value = 5,
@@ -53,7 +53,10 @@ ui <- fluidPage(
 
 
         mainPanel(
-          p("This app allows you take a random sample from the first 10 million hosts from the Common Crawl Host Web Graph. Hosts have been transformed from reverse domain notation. The latest data is from the November/December 2021 and January 2022 crawl. You will find the source code of this app as well as data preparation scripts and documentation on GitHub:"),
+          p("This app is the result of a paper published at the TPDL 2022, the paper is available here"),
+          tags$a(href="https://link.springer.com/chapter/10.1007/978-3-031-16802-4_2", "Analyzing the Web: Are Top Websites Lists a Good Choice for Research?"),
+          p(),
+          p("The tool allows you take a random sample from the first 10 million hosts from the Common Crawl Host Web Graph. Hosts have been transformed from reverse domain notation. The latest data is from the May/Jun/Aug 2022 crawl. You will find the source code of this app as well as data preparation scripts and documentation on GitHub:"),
           tags$a(href="https://github.com/daswesen/CCSample", "Go to the GitHub Repository"),
           p(),
           p("Please note that the language feature is still experimental. Technical hosts exclusion is based on a blacklist. Feel free to contact me for additions."),
